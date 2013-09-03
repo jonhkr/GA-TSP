@@ -116,24 +116,45 @@ function GABase(population) {
   this.population = population;
 }
 
-  // FIX-ME: I HAVE A BUG
-GABase.prototype.crossover = function(child, parent1, parent2, i, j) {
-  i = typeof i !== 'undefined' ? i : 0;
-  j = typeof j !== 'undefined' ? j : 0;
 
-  if(i >= parent1.length) return;
+GABase.prototype.crossover = function(child1, child2, parent1, parent2) {
 
-  if (!child.contains(parent1[i])) {
-    if (child[i]) {
-      child[parent2.indexOf(parent1[i])] = parent1[i];
-    } else {
-      child[i] = parent1[i];
+  length = parent1.length;
+
+  var i1 = Math.floor(Math.random() * length);
+  var i2 = Math.floor(Math.random() * length);
+  if(i1 == i2) i2 = 1 + Math.floor(Math.random() * (length-i2-1));
+  if(i1 > i2) {
+    var iaux = i1;
+    i1 = i2;
+    i2 = iaux;
+  }
+
+  for(var i = i1; i <= i2; i++) {
+    child1[i] = parent1[i];
+    child2[i] = parent2[i];
+  }
+
+  for(var i = 0; i < length; i++) {
+    if(!child1.contains(parent2[i])) {
+      for(var j = 0; j < length; j++) {
+        if(typeof child1[j] === 'undefined') {
+          child1[j] = parent2[i];
+          break;
+        }
+      }
+    }
+
+    if(!child2.contains(parent1[i])){
+      for(var j = 0; j < length; j++) {
+        if(typeof child2[j]  === 'undefined') {
+          child2[j] = parent1[i];
+          break;
+        }
+      }
     }
   }
 
-  if (j % 2 == 0) return this.crossover(child, parent2, parent1, i, ++j);
-
-  this.crossover(child, parent1, parent2, ++i, ++j);
 };
 
 GABase.prototype.mutate = function(a) {
@@ -159,6 +180,7 @@ GABase.prototype.selectFittest = function(n) {
 
 function TSPGA(distanceMatrix, population) {
   this.distanceMatrix = distanceMatrix;
+  this.best = undefined;
   GABase.call(this, population);
 };
 
@@ -169,21 +191,31 @@ TSPGA.prototype.constructor = TSPGA;
 TSPGA.prototype.fitness = function(el) {
   var distance = 0;
 
+  try {
+
+
   for(var i = 0; i < el.length; i++) {
     distance += this.distanceMatrix.getDistance(el[i % el.length].id, el[(i+1) % el.length].id);
   }
+} catch(e) {
+  console.log(el);
+}
 
   return distance;
 }
 
 TSPGA.prototype.runIteration = function() {
   var initialPopulationSize = this.population.length;
-  console.log(initialPopulationSize);
-  var mutationRate = 0.1;
+  var mutationRate = 0.015;
 
   var selected = this.selectFittest(20);
 
-  console.log(this.fitness(selected[0]));
+  var selectedFitness = this.fitness(selected[0]);
+
+  if (!this.best || (bestFitness = this.fitness(this.best)) > selectedFitness) {
+    this.best = selected[0];
+    console.log(selectedFitness);
+  }
 
   for(var i = 0; i < selected.length; i++) {
     var child1 = [],
@@ -191,8 +223,7 @@ TSPGA.prototype.runIteration = function() {
         parent1 = selected[Math.floor(Math.random() * selected.length)],
         parent2 = selected[Math.floor(Math.random() * selected.length)];
 
-    this.crossover(child1, parent1, parent2);
-    this.crossover(child2, parent1, parent2);
+    this.crossover(child1, child2, parent1, parent2);
 
     if (mutationRate >= Math.random()) {
       this.mutate(child1);
@@ -205,10 +236,7 @@ TSPGA.prototype.runIteration = function() {
     this.population.push(child1);
     this.population.push(child2);
   }
-  console.log(this.population);
 
-  console.log(selected.length*2, this.population.length);
-  //this.population = this.population.slice(selected.length*2);
+  this.population = this.population.slice(selected.length*2);
 
-  console.log(this.population.length);
 }
