@@ -143,4 +143,4 @@ TSPGA.prototype.runIterations = function(n) {
   
 }
 
-window.ga = new TSPGA(new DistanceMatrix(data.distanceMatrix), Helper.generateRandomPopulation(data.cities, 200));
+window.ga = new TSPGA(new DistanceMatrix(data.distanceMatrix), Helper.generateRandomPopulation(data.cities, 100));

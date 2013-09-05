@@ -36,3 +36,28 @@ function drawGraph(route) {
     (new Edge(coords1.x * 1.5 + $centerX, coords1.y * 1.5 + $centerY, coords2.x * 1.5 + $centerX, coords2.y * 1.5 + $centerY)).draw($ctx);
   }
 }
+
+$(function() {
+   var mapOptions = {
+    center: new google.maps.LatLng(-34.397, 150.644),
+    zoom: 8,
+    mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+  var map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+
+  var geocoder = new google.maps.Geocoder();
+
+  var addr = "Lagoa vermelha, rs";
+
+  geocoder.geocode({ address: addr}, function(results, status) {
+    if(status == google.maps.GeocoderStatus.OK) {
+      map.setCenter(results[0].geometry.location);
+      var marker = new google.maps.Marker({
+        map: map,
+        position: results[0].geometry.location
+      });
+    }else {
+      console.log('Geocode was not successful for the following reason:' + status);
+    }
+  });
+});
