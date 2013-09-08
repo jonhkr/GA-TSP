@@ -1,32 +1,4 @@
 
-Array.prototype.contains = function(el) { return this.indexOf(el) != -1; }
-Array.prototype.clone = function() {
-  var clone = [];
-  for (var i = 0; i < this.length; i++){
-    clone.push(this[i]);
-  }
-
-  return clone;
-}
-
-function DistanceMatrix(distanceMatrix) {
-  this.distanceMatrix = distanceMatrix;
-}
-
-DistanceMatrix.prototype.getDistance = function(a, b) {
-  return this.distanceMatrix[a][b];
-}
-
-
-function City(id, name) {
-  this.id = id;
-  this.name = name;
-}
-
-for(var i = 0; i < data.distanceMatrix.length; i++) {
-  data.cities.push(new City(i, i));
-}
-
 function TSPGA(distanceMatrix, population) {
   this.distanceMatrix = distanceMatrix;
   this.population = population;
@@ -105,6 +77,7 @@ TSPGA.prototype.runIteration = function() {
 
   var selected = this.selectFittest(this.sampleSize);
 
+  console.log(selected);
   var selectedFitness = this.fitness(selected[0]);
 
   if (!this.best || (bestFitness = this.fitness(this.best)) > selectedFitness) {
@@ -139,8 +112,6 @@ TSPGA.prototype.runIterations = function(n) {
   for(var i = 0; i < n; i++) {
     this.runIteration();
   }
-
-  
 }
 
-window.ga = new TSPGA(new DistanceMatrix(data.distanceMatrix), Helper.generateRandomPopulation(data.cities, 100));
+// window.ga = new TSPGA(new DistanceMatrix(data.distanceMatrix), Helper.generateRandomPopulation(data.cities, 100));

@@ -1,3 +1,14 @@
+
+Array.prototype.contains = function(el) { return this.indexOf(el) != -1; }
+Array.prototype.clone = function() {
+  var clone = [];
+  for (var i = 0; i < this.length; i++){
+    clone.push(this[i]);
+  }
+
+  return clone;
+}
+
 function Helper() {}
 
 Helper.prototype.shuffle = function(arr) {

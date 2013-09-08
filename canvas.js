@@ -37,27 +37,77 @@ function drawGraph(route) {
   }
 }
 
+var cities = []
+  , geocoder = new google.maps.Geocoder()
+  , directions = new google.maps.DirectionsService()
+  , distanceMatrix = new DistanceMatrix()
+  , map;
+
+function addCity(address) {
+  geocoder.geocode({ address: address }, function(results, status) {
+    if (status == google.maps.GeocoderStatus.OK) {
+      cities.push(new City(cities.length, address, results[0].geometry.location));
+
+      console.log('City with address "' + address + '" added.');
+
+      if(cities.length > 0) {
+        for (var i = 0; i < cities.length; i++) {
+          for (var j = 0; j < cities.length; j++) {
+            var city0 = cities[i]
+              , city1 = cities[j];
+
+            if (typeof distanceMatrix.getDistance(city0.id, city1.id) === 'undefined') {
+              (function(city0, city1) {
+                var directionsRequest = {
+                  origin: city0.location,
+                  destination: city1.location,
+                  travelMode: google.maps.TravelMode.DRIVING
+                };
+
+                directions.route(directionsRequest, function(result, status) {
+                  if(status == google.maps.DirectionsStatus.OK) {
+                    var distance = result.routes[0].legs[0].distance.value;
+
+                    distanceMatrix.setDistance(city0.id, city1.id, distance);
+
+                    console.log('The distance between address "' + city0.name + '" and address "' + city1.name + '" is ' + distance);
+                  }
+                });
+              })(city0, city1);
+            }
+          }
+        }
+      }
+    } else {
+      console.log('Geocode was not successful for the following reason:' + status);
+    }
+  });
+}
+
+function drawMarkers(route) {
+  var locations = [];
+  for(var i = 0; i < route.length; i++) {
+    new google.maps.Marker({
+      map: map,
+      position: route[i].location
+    });
+    locations.push(route[i].location);
+  }
+
+  locations.push(route[0].location);
+  new google.maps.Polyline({
+    map: map,
+    path: locations
+  });
+}
+
+
 $(function() {
    var mapOptions = {
     center: new google.maps.LatLng(-34.397, 150.644),
     zoom: 8,
     mapTypeId: google.maps.MapTypeId.ROADMAP
   };
-  var map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+  map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
 
-  var geocoder = new google.maps.Geocoder();
-
-  var addr = "Lagoa vermelha, rs";
-
-  geocoder.geocode({ address: addr}, function(results, status) {
-    if(status == google.maps.GeocoderStatus.OK) {
-      map.setCenter(results[0].geometry.location);
-      var marker = new google.maps.Marker({
-        map: map,
-        position: results[0].geometry.location
-      });
-    }else {
-      console.log('Geocode was not successful for the following reason:' + status);
-    }
-  });
 });
