@@ -1,4 +1,22 @@
 
+function DirectionsMatrix() {
+  this.directionsMatrix = [];
+}
+
+DirectionsMatrix.prototype.setDirections = function(a, b, directions) {
+  if (typeof this.directionsMatrix[a] === 'undefined')
+    this.directionsMatrix[a] = [];
+
+  this.directionsMatrix[a][b] = directions;
+}
+
+DirectionsMatrix.prototype.getDirections = function(a, b) {
+  if (typeof this.directionsMatrix[a] === 'undefined') {
+    return undefined;
+  }
+  return this.directionsMatrix[a][b];
+}
+
 function DistanceMatrix(distanceMatrix) {
   this.distanceMatrix = distanceMatrix || [];
 }

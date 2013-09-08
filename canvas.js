@@ -41,6 +41,7 @@ var cities = []
   , geocoder = new google.maps.Geocoder()
   , directions = new google.maps.DirectionsService()
   , distanceMatrix = new DistanceMatrix()
+  , directionsMatrix = new DirectionsMatrix()
   , map;
 
 function addCity(address) {
@@ -69,6 +70,7 @@ function addCity(address) {
                     var distance = result.routes[0].legs[0].distance.value;
 
                     distanceMatrix.setDistance(city0.id, city1.id, distance);
+                    directionsMatrix.setDirections(city0.id, city1.id, result);
 
                     console.log('The distance between address "' + city0.name + '" and address "' + city1.name + '" is ' + distance);
                   }
@@ -99,6 +101,16 @@ function drawMarkers(route) {
     map: map,
     path: locations
   });
+}
+
+function drawDirections(route) {
+  for(var i = 0; i < route.length; i++) {
+    var city0 = route[i]
+      , city1 = route[(i + 1) % route.length]
+      , directionsDisplay = new google.maps.DirectionsRenderer({ map: map, suppressMarkers: true, suppressInforWindows: true});
+
+    directionsDisplay.setDirections(directionsMatrix.getDirections(city0.id, city1.id));
+  }
 }
 
 
