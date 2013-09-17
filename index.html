@@ -3,6 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <title></title>
+  <style>
+    
+    body {
+      font-family: Arial;
+      color: #333;
+      font-size: 0.8em;
+    }
+
+    .map.canvas {
+      width: 80%;
+      height: 400px;
+    }
+
+    .sidebar {
+      width: 20%;
+      float: left;
+    }
+
+    .sidebar input {
+      width: 89%;
+      padding: 3%;
+      color: #444;
+      border: 1px solid #e5e5e5;
+      outline: none;
+    }
+
+    .sidebar input:focus {
+      border: 1px solid #3896d2;
+    }
+
+    .sidebar .field {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="fields">
+      <div class="field">
+        <label for="address-1">Address 1</label><br>
+        <input type="text" id="address-1"><br>
+      </div>
+      <div class="field">
+        <label for="address-1">Address 2</label><br>
+        <input type="text" id="address-2"><br>
+      </div>
+      <div class="field">
+        <label for="address-1">Address 3</label><br>
+        <input type="text" id="address-3"><br>
+      </div>
+      <div class="field">
+        <label for="address-1">Address 4</label><br>
+        <input type="text" id="address-4">
+      </div>
+
+      <button class="add-field">+</button>
+      <button class="find-route">Find Route</button>
+    </div>
+  </div>
+  <div id="map_canvas" class="map canvas"></div>
+
   <script type="text/javascript" src="jquery-1.10.2.min.js"></script>
   <script type="text/javascript"
     src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDYN0sgBkxUmZAy7dM8wR0F_YgsMtstSx0&sensor=false">
@@ -12,8 +73,58 @@
   <script type="text/javascript" src="data.js"></script>
   <script type="text/javascript" src="helpers.js"></script>
   <script type="text/javascript" src="app.js"></script>
-</head>
-<body>
-  <div id="map_canvas" style="width:100%; height:800px"></div>
+
+  <script type="text/javascript">
+    $(function() {
+      var fieldTpl = '<div class="field">' +
+        '<label for="address-1">Address {n}</label><br>' +
+        '<input type="text" id="address-{n}">' +
+      '</div>',
+      numFields = 4;
+      $('.add-field').on('click', function() {
+        $(fieldTpl.replace('{n}', ++numFields)).insertBefore(this);
+      });
+
+      $('.find-route').on('click', function() {
+        var addressFields = $('.field input[type="text"]')
+          , address
+          , lock = false;
+
+        cities = [];
+        distanceMatrix = new DistanceMatrix();
+        directionsMatrix = new DirectionsMatrix();
+
+        var l = addressFields.size()
+          , next;
+
+
+        var init = function() {
+          var a = new TSPGA(distanceMatrix, Helper.generateRandomPopulation(cities, Math.floor(Math.pow(l, 2.5))));
+          a.sampleSize = Math.floor(Math.pow(l, 1.5));
+
+          a.runIterations(10, function() {
+            drawDirections(a.best);
+          });
+        }
+        var i = 0;
+        var loadNextAddress = function() {
+          if(i == l){
+            //init();
+            return;
+          }
+
+          next = addressFields.eq(i).val();
+          if (next) {
+            addCity(next, loadNextAddress);
+          }
+          i++;
+        }
+
+        loadNextAddress();
+
+        
+      });
+    });
+  </script>
 </body>
 </html>

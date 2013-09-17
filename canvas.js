@@ -36,7 +36,6 @@ function drawGraph(route) {
     (new Edge(coords1.x * 1.5 + $centerX, coords1.y * 1.5 + $centerY, coords2.x * 1.5 + $centerX, coords2.y * 1.5 + $centerY)).draw($ctx);
   }
 }
-
 var cities = []
   , geocoder = new google.maps.Geocoder()
   , directions = new google.maps.DirectionsService()
@@ -44,7 +43,9 @@ var cities = []
   , directionsMatrix = new DirectionsMatrix()
   , map;
 
-function addCity(address) {
+
+// FIX ME
+function addCity(address, callback) {
   geocoder.geocode({ address: address }, function(results, status) {
     if (status == google.maps.GeocoderStatus.OK) {
       cities.push(new City(cities.length, address, results[0].geometry.location));
@@ -52,33 +53,49 @@ function addCity(address) {
       console.log('City with address "' + address + '" added.');
 
       if(cities.length > 0) {
-        for (var i = 0; i < cities.length; i++) {
-          for (var j = 0; j < cities.length; j++) {
-            var city0 = cities[i]
-              , city1 = cities[j];
+        var callbacksCount = Math.pow(cities.length, 2);
+        var i = 0;
+        var j = 0;
 
-            if (typeof distanceMatrix.getDistance(city0.id, city1.id) === 'undefined') {
-              (function(city0, city1) {
-                var directionsRequest = {
-                  origin: city0.location,
-                  destination: city1.location,
-                  travelMode: google.maps.TravelMode.DRIVING
-                };
-
-                directions.route(directionsRequest, function(result, status) {
-                  if(status == google.maps.DirectionsStatus.OK) {
-                    var distance = result.routes[0].legs[0].distance.value;
-
-                    distanceMatrix.setDistance(city0.id, city1.id, distance);
-                    directionsMatrix.setDirections(city0.id, city1.id, result);
-
-                    console.log('The distance between address "' + city0.name + '" and address "' + city1.name + '" is ' + distance);
-                  }
-                });
-              })(city0, city1);
-            }
+        (function next() {
+          if(callbacksCount <= 0) {
+            callback();
+            return;
           }
-        }
+          var city0 = cities[i]
+            , city1 = cities[j];
+
+          (function(city0, city1) {
+            if (typeof distanceMatrix.getDistance(city0.id, city1.id) === 'undefined') {
+              var directionsRequest = {
+                origin: city0.location,
+                destination: city1.location,
+                travelMode: google.maps.TravelMode.DRIVING
+              };
+              directions.route(directionsRequest, function(result, status) {
+                if(status == google.maps.DirectionsStatus.OK) {
+                  var distance = result.routes[0].legs[0].distance.value;
+
+                  distanceMatrix.setDistance(city0.id, city1.id, distance);
+                  directionsMatrix.setDirections(city0.id, city1.id, result);
+
+                  console.log('The distance between address "' + city0.name + '" and address "' + city1.name + '" is ' + distance);
+                }
+                console.log(status)
+                callbacksCount--;
+                next();
+              });
+            } else {
+              callbacksCount--;
+              next();
+            }
+          })(city0, city1);
+          j++;
+          if(j == cities.length) {
+            i++;
+            j = 0;
+          }
+        })();
       }
     } else {
       console.log('Geocode was not successful for the following reason:' + status);

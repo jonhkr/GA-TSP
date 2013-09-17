@@ -73,7 +73,7 @@ TSPGA.prototype.selectFittest = function(n) {
   }).slice(0, n);
 }
 
-TSPGA.prototype.runIteration = function() {
+TSPGA.prototype.runIteration = function(callback) {
 
   var selected = this.selectFittest(this.sampleSize);
 
@@ -106,11 +106,17 @@ TSPGA.prototype.runIteration = function() {
   }
 
   this.population = this.population.slice(selected.length*2);
+
+  if(callback) callback();
 }
 
-TSPGA.prototype.runIterations = function(n) {
+TSPGA.prototype.runIterations = function(n, callback) {
+  var j = 0;
   for(var i = 0; i < n; i++) {
-    this.runIteration();
+    this.runIteration(function() {
+      j++;
+      if(j == n) callback();
+    });
   }
 }
 
