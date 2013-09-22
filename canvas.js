@@ -36,100 +36,117 @@ function drawGraph(route) {
     (new Edge(coords1.x * 1.5 + $centerX, coords1.y * 1.5 + $centerY, coords2.x * 1.5 + $centerX, coords2.y * 1.5 + $centerY)).draw($ctx);
   }
 }
+
+function rotateVector(v, n) {
+  var l = v.length
+    , rv = [];
+  for(var i=n; i < l+n; i++) {
+    rv.push(v[i % l]);
+  }
+
+  return rv;
+}
+
 var cities = []
   , geocoder = new google.maps.Geocoder()
+  , distanceMatrixService = new google.maps.DistanceMatrixService()
   , directions = new google.maps.DirectionsService()
   , distanceMatrix = new DistanceMatrix()
   , directionsMatrix = new DirectionsMatrix()
+  , markers = []
+  , pLine
   , map;
 
 
-// FIX ME
-function addCity(address, callback) {
-  geocoder.geocode({ address: address }, function(results, status) {
-    if (status == google.maps.GeocoderStatus.OK) {
-      cities.push(new City(cities.length, address, results[0].geometry.location));
-
-      console.log('City with address "' + address + '" added.');
-
-      if(cities.length > 0) {
-        var callbacksCount = Math.pow(cities.length, 2);
-        var i = 0;
-        var j = 0;
-
-        (function next() {
-          if(callbacksCount <= 0) {
-            callback();
-            return;
-          }
-          var city0 = cities[i]
-            , city1 = cities[j];
-
-          (function(city0, city1) {
-            if (typeof distanceMatrix.getDistance(city0.id, city1.id) === 'undefined') {
-              var directionsRequest = {
-                origin: city0.location,
-                destination: city1.location,
-                travelMode: google.maps.TravelMode.DRIVING
-              };
-              directions.route(directionsRequest, function(result, status) {
-                if(status == google.maps.DirectionsStatus.OK) {
-                  var distance = result.routes[0].legs[0].distance.value;
-
-                  distanceMatrix.setDistance(city0.id, city1.id, distance);
-                  directionsMatrix.setDirections(city0.id, city1.id, result);
-
-                  console.log('The distance between address "' + city0.name + '" and address "' + city1.name + '" is ' + distance);
-                }
-                console.log(status)
-                callbacksCount--;
-                next();
-              });
-            } else {
-              callbacksCount--;
-              next();
-            }
-          })(city0, city1);
-          j++;
-          if(j == cities.length) {
-            i++;
-            j = 0;
-          }
-        })();
+function addCities(addresses, callback) {
+  var i = 0;
+  (function geocode(address, callback) {
+    geocoder.geocode({ address: address }, function(results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+        cities.push(new City(cities.length, address, results[0].geometry.location));
+        console.log('City with address "' + address + '" added.');
+      } else {
+        console.log('Geocode was not successful for the following reason:' + status);
       }
-    } else {
-      console.log('Geocode was not successful for the following reason:' + status);
+
+      i++;
+      if(i < addresses.length) {
+        geocode(addresses[i], callback);
+      }else{
+        callback();
+      }
+    });
+  })(addresses[0], function(){
+    callback(cities);
+  });
+}
+
+function getLocations(cities){
+  var l = [];
+  for(var i = 0; i < cities.length; i++) {
+    l.push(cities[i].location);
+  }
+  return l;
+}
+
+function generateDistanceMatrix(cities, callback) {
+  var origins = getLocations(cities)
+    , destinations = rotateVector(origins, 1)
+    , destinationCities = rotateVector(cities, 1);
+
+  distanceMatrixService.getDistanceMatrix({
+    origins: origins,
+    destinations: destinations,
+    travelMode: google.maps.TravelMode.DRIVING,
+    avoidHighways: false,
+    avoidTolls: false
+  }, function(result, status){
+    if(status == google.maps.DistanceMatrixStatus.OK) {
+      for(var i = 0; i < cities.length; i++) {
+        for(var j = 0; j < cities.length; j++) {
+          var city0 = cities[i]
+            , city1 = destinationCities[j]
+            , distance = result.rows[i].elements[j].distance.value;
+
+          distanceMatrix.setDistance(city0.id, city1.id, distance);
+
+          console.log('The distance between address "' + city0.name + '" and address "' + city1.name + '" is ' + distance);
+        }
+      }
+    }else{
+      console.log("Error requesting distance matrix from service", status);
     }
+
+    callback(distanceMatrix);
+    
   });
 }
 
 function drawMarkers(route) {
-  var locations = [];
-  for(var i = 0; i < route.length; i++) {
-    new google.maps.Marker({
+  var locations = getLocations(route)
+    , latlngbounds = new google.maps.LatLngBounds()
+    , letter;
+  for(var i = 0; i < locations.length; i++) {
+    letter = String.fromCharCode("A".charCodeAt(0) + i);
+    markers.push(new google.maps.Marker({
       map: map,
-      position: route[i].location
-    });
-    locations.push(route[i].location);
+      position: locations[i],
+      title: route[i].name,
+      icon: "http://maps.google.com/mapfiles/marker" + letter + ".png"
+    }));
+    latlngbounds.extend(locations[i]);
   }
 
   locations.push(route[0].location);
-  new google.maps.Polyline({
+  
+  pLine = new google.maps.Polyline({
     map: map,
     path: locations
   });
+
+  map.setCenter(latlngbounds.getCenter());
+  map.fitBounds(latlngbounds); 
 }
-
-function drawDirections(route) {
-  for(var i = 0; i < route.length; i++) {
-    var city0 = route[i]
-      , city1 = route[(i + 1) % route.length]
-      , directionsDisplay = new google.maps.DirectionsRenderer({ map: map, suppressMarkers: true, suppressInforWindows: true});
-
-    directionsDisplay.setDirections(directionsMatrix.getDirections(city0.id, city1.id));
-  }
-}
-
 
 $(function() {
    var mapOptions = {

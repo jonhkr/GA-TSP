@@ -87,42 +87,46 @@
 
       $('.find-route').on('click', function() {
         var addressFields = $('.field input[type="text"]')
-          , address
+          , addresses = []
           , lock = false;
 
         cities = [];
         distanceMatrix = new DistanceMatrix();
         directionsMatrix = new DirectionsMatrix();
 
-        var l = addressFields.size()
-          , next;
+        var init = function(cities, distanceMatrix) {
+          var l = cities.length
+            , populationSize = Math.floor(Math.pow(l, 2.5))
+            , sampleSize = Math.floor(Math.pow(l, 1.5))
+            , nIterations = Math.pow(l, 4)
+            , ga = new TSPGA(distanceMatrix, Helper.generateRandomPopulation(cities, populationSize));
+          
+          ga.sampleSize = sampleSize;
 
+          console.log(
+            "Population size: " + populationSize + "\n" +
+            "Sample size: " + sampleSize + "\n" +
+            "Iterations: " + nIterations
+          );
 
-        var init = function() {
-          var a = new TSPGA(distanceMatrix, Helper.generateRandomPopulation(cities, Math.floor(Math.pow(l, 2.5))));
-          a.sampleSize = Math.floor(Math.pow(l, 1.5));
-
-          a.runIterations(10, function() {
-            drawDirections(a.best);
+          ga.runIterations(nIterations, function() {
+            console.log(ga.best);
+            drawMarkers(ga.best);
           });
         }
-        var i = 0;
-        var loadNextAddress = function() {
-          if(i == l){
-            //init();
-            return;
-          }
-
-          next = addressFields.eq(i).val();
-          if (next) {
-            addCity(next, loadNextAddress);
-          }
-          i++;
-        }
-
-        loadNextAddress();
-
         
+        addressFields.each(function(){
+          var addr = $(this).val();
+          if(addr) {
+            addresses.push(addr);
+          }
+        });
+
+        addCities(addresses, function(cities){
+          generateDistanceMatrix(cities, function(distanceMatrix){
+            init(cities, distanceMatrix);
+          });
+        });
       });
     });
   </script>

@@ -77,12 +77,11 @@ TSPGA.prototype.runIteration = function(callback) {
 
   var selected = this.selectFittest(this.sampleSize);
 
-  console.log(selected);
   var selectedFitness = this.fitness(selected[0]);
 
   if (!this.best || (bestFitness = this.fitness(this.best)) > selectedFitness) {
     this.best = selected[0];
-    console.log(selectedFitness);
+    console.log('Found better distance: ' + selectedFitness);
   }
 
   for(var i = 0; i < selected.length; i++) {
