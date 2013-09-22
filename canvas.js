@@ -37,6 +37,7 @@ function drawGraph(route) {
   }
 }
 
+
 function rotateVector(v, n) {
   var l = v.length
     , rv = [];
@@ -46,6 +47,7 @@ function rotateVector(v, n) {
 
   return rv;
 }
+
 
 var cities = []
   , geocoder = new google.maps.Geocoder()
@@ -81,6 +83,7 @@ function addCities(addresses, callback) {
   });
 }
 
+
 function getLocations(cities){
   var l = [];
   for(var i = 0; i < cities.length; i++) {
@@ -88,6 +91,7 @@ function getLocations(cities){
   }
   return l;
 }
+
 
 function generateDistanceMatrix(cities, callback) {
   var origins = getLocations(cities)
@@ -122,6 +126,7 @@ function generateDistanceMatrix(cities, callback) {
   });
 }
 
+
 function drawMarkers(route) {
   var locations = getLocations(route)
     , latlngbounds = new google.maps.LatLngBounds()
@@ -138,7 +143,7 @@ function drawMarkers(route) {
   }
 
   locations.push(route[0].location);
-  
+
   pLine = new google.maps.Polyline({
     map: map,
     path: locations
@@ -147,6 +152,7 @@ function drawMarkers(route) {
   map.setCenter(latlngbounds.getCenter());
   map.fitBounds(latlngbounds); 
 }
+
 
 $(function() {
    var mapOptions = {

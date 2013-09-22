@@ -6,17 +6,23 @@
   <style>
     
     body {
+      margin: 0;
       font-family: Arial;
       color: #333;
       font-size: 0.8em;
     }
 
+    body, html {
+      height: 100%;
+    }
+
     .map.canvas {
-      width: 80%;
-      height: 400px;
+      width: 76%;
+      height: 100%;
     }
 
     .sidebar {
+      margin: 2%;
       width: 20%;
       float: left;
     }
@@ -87,8 +93,7 @@
 
       $('.find-route').on('click', function() {
         var addressFields = $('.field input[type="text"]')
-          , addresses = []
-          , lock = false;
+          , addresses = [];
 
         cities = [];
         distanceMatrix = new DistanceMatrix();
